@@ -3,188 +3,359 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="theme-color" content="#222"/>
   <title>Mind Relax</title>
-  <link rel="manifest" href="manifest.json"/>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=1920&q=80') no-repeat center center fixed;
       background-size: cover;
-      transition: background 0.5s, color 0.3s;
-      color: #111;
-      overflow: hidden;
+      background-position: center;
+      color: #fff;
+      transition: background 0.5s ease;
     }
 
     .dark-mode {
-      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=1920&q=80') no-repeat center center fixed;
-      background-size: cover;
+      background-color: #111;
       color: #fff;
-      background-blend-mode: darken;
     }
 
     .container {
       text-align: center;
-      padding: 2rem;
-      backdrop-filter: blur(6px);
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      margin: 2rem;
+      padding: 30px;
     }
 
     h1 {
       font-size: 2.5rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 20px;
     }
 
-    .player, .controls {
-      margin: 1.5rem 0;
-    }
-
-    select, button {
-      padding: 0.5rem 1rem;
+    select, input[type="range"] {
+      margin: 10px;
+      padding: 10px;
       font-size: 1rem;
+    }
+
+    .breathing {
+      margin-top: 40px;
+      font-size: 2rem;
+      animation: breath 6s ease-in-out infinite;
+    }
+
+    @keyframes breath {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.5);
+        opacity: 1;
+      }
+    }
+
+    .dark-mode-toggle, .start-button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin: 10px;
+      cursor: pointer;
+      background: #fff;
+      color: #000;
       border: none;
-      border-radius: 8px;
-      margin: 0.5rem;
+      border-radius: 5px;
     }
 
-    #volume {
-      width: 150px;
-    }
-
-    .breath-circle {
-      margin: 2rem auto;
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      animation: breathe 8s infinite ease-in-out;
-    }
-
-    @keyframes breathe {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.5); }
+    .dark-mode .dark-mode-toggle {
+      background: #333;
+      color: #fff;
     }
 
     .prompt {
-      font-size: 1.2rem;
-      margin-top: 1rem;
+      font-size: 2rem;
+      margin-top: 20px;
     }
 
-    .timer {
-      font-size: 1.8rem;
-      margin-top: 1rem;
-    }
-
-    .toggle-dark {
-      position: fixed;
-      top: 10px;
-      right: 10px;
+    audio {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <button class="toggle-dark" onclick="toggleDarkMode()">🌙</button>
   <div class="container">
-    <h1>Mind Relax</h1>
+    <h1>🧘 Mind Relax - Mintu</h1>
 
-    <div class="player">
-      <label for="track">Choose Music:</label>
-      <select id="track">
-        <option value="ocean.mp3">Ocean 🌊</option>
-        <option value="forest.mp3">Forest 🌲</option>
-        <option value="piano.mp3">Piano 🎹</option>
-        <option value="rain.mp3">Rain 🌧️</option>
-      </select>
-      <br />
-      <button onclick="playMusic()">▶ Play</button>
-      <button onclick="pauseMusic()">⏸ Pause</button>
-      <br />
-      Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="1"/>
-    </div>
+    <h1><marquee>"Relax. Refresh. Refocus."
 
-    <div class="breath-circle"></div>
-    <div class="prompt" id="prompt">Inhale…</div>
+</marquee></h1>
 
-    <div class="controls">
-      <label for="session">Timer (mins):</label>
-      <select id="session">
-        <option value="1">1</option>
-        <option value="5">5</option>
-        <option value="10">10</option>
-      </select>
-      <button onclick="startTimer()">🕒 Start Session</button>
-      <div class="timer" id="timer">0:00</div>
-    </div>
+    <select id="musicSelector">
+      <option value="ocean">Ocean</option>
+      <option value="rain">Rain</option>
+      <option value="piano">Piano</option>
+      <option value="forest">Forest</option>
+    </select>
+
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1"/>
+
+    <br/>
+
+    <button class="start-button" onclick="startBreathing()">Start Breathing</button>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+
+    <div class="breathing" id="breathingText">Ready...</div>
+    <div class="prompt" id="promptText"></div>
+
+    <!-- Audio elements -->
+    <audio id="audioOcean" loop src="ocean.mp3"></audio>
+    <audio id="audioRain" loop src="rain.mp3"></audio>
+    <audio id="audioPiano" loop src="piano.mp3"></audio>
+    <audio id="audioForest" loop src="forest.mp3"></audio>
   </div>
 
-  <audio id="bg-music" loop></audio>
-
   <script>
-    const audio = document.getElementById('bg-music');
-    const trackSelect = document.getElementById('track');
-    const volumeSlider = document.getElementById('volume');
-    const promptText = document.getElementById('prompt');
-    const timerDisplay = document.getElementById('timer');
+    const musicSelector = document.getElementById("musicSelector");
+    const volumeSlider = document.getElementById("volumeSlider");
+    const promptText = document.getElementById("promptText");
+    const breathingText = document.getElementById("breathingText");
 
-    let timerInterval;
-    let totalSeconds = 0;
+    let currentAudio = null;
+    let breathingInterval;
+    let prompts = ["Inhale...", "Hold...", "Exhale...", "Hold..."];
+    let backgroundImages = {
+      ocean: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e')",
+      rain: "url('https://images.unsplash.com/photo-1523413651479-597eb2da0ad6')",
+      piano: "url('https://images.unsplash.com/photo-1511376777868-611b54f68947')",
+      forest: "url('https://images.unsplash.com/photo-1501785888041-af3ef285b470')"
+    };
 
-    function playMusic() {
-      audio.src = trackSelect.value;
-      audio.volume = volumeSlider.value;
-      audio.play();
+    function updateAudio() {
+      if (currentAudio) currentAudio.pause();
+
+      const selected = musicSelector.value;
+      currentAudio = document.getElementById("audio" + selected.charAt(0).toUpperCase() + selected.slice(1));
+      currentAudio.volume = volumeSlider.value;
+      currentAudio.play();
+
+      document.body.style.backgroundImage = backgroundImages[selected];
     }
 
-    function pauseMusic() {
-      audio.pause();
+    function startBreathing() {
+      let index = 0;
+      updatePrompt(index);
+      clearInterval(breathingInterval);
+
+      breathingInterval = setInterval(() => {
+        index = (index + 1) % prompts.length;
+        updatePrompt(index);
+      }, 4000); // 4 seconds per phase
     }
 
-    volumeSlider.addEventListener('input', () => {
-      audio.volume = volumeSlider.value;
-    });
-
-    let inhale = true;
-    setInterval(() => {
-      promptText.innerText = inhale ? "Inhale…" : "Exhale…";
-      inhale = !inhale;
-    }, 4000);
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      const minutes = parseInt(document.getElementById('session').value);
-      totalSeconds = minutes * 60;
-      updateTimerDisplay();
-
-      timerInterval = setInterval(() => {
-        if (totalSeconds <= 0) {
-          clearInterval(timerInterval);
-          alert("Session complete 🌟");
-          timerDisplay.textContent = "0:00";
-        } else {
-          totalSeconds--;
-          updateTimerDisplay();
-        }
-      }, 1000);
-    }
-
-    function updateTimerDisplay() {
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = totalSeconds % 60;
-      timerDisplay.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    function updatePrompt(i) {
+      breathingText.textContent = prompts[i];
+      speak(prompts[i]);
     }
 
     function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
     }
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').then(() => {
-        console.log('Service Worker Registered');
-      });
+    function speak(text) {
+      const synth = window.speechSynthesis;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.9;
+      synth.speak(utter);
     }
+
+    musicSelector.addEventListener("change", updateAudio);
+    volumeSlider.addEventListener("input", () => {
+      if (currentAudio) currentAudio.volume = volumeSlider.value;
+    });
+
+    // Start music initially
+    updateAudio();
   </script>
+  <footer>design by = mintu "Calm your chaos, one breath at a time."</footer>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mind Relax</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      transition: background 0.5s ease;
+    }
+
+    .dark-mode {
+      background-color: #111;
+      color: #fff;
+    }
+
+    .container {
+      text-align: center;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    select, input[type="range"] {
+      margin: 10px;
+      padding: 10px;
+      font-size: 1rem;
+    }
+
+    .breathing {
+      margin-top: 40px;
+      font-size: 2rem;
+      animation: breath 6s ease-in-out infinite;
+    }
+
+    @keyframes breath {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.5);
+        opacity: 1;
+      }
+    }
+
+    .dark-mode-toggle, .start-button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin: 10px;
+      cursor: pointer;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .dark-mode .dark-mode-toggle {
+      background: #333;
+      color: #fff;
+    }
+
+    .prompt {
+      font-size: 2rem;
+      margin-top: 20px;
+    }
+
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧘 Mind Relax - Mintu</h1>
+
+    <h1><marquee>"Relax. Refresh. Refocus."
+
+</marquee></h1>
+
+    <select id="musicSelector">
+      <option value="ocean">Ocean</option>
+      <option value="rain">Rain</option>
+      <option value="piano">Piano</option>
+      <option value="forest">Forest</option>
+    </select>
+
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1"/>
+
+    <br/>
+
+    <button class="start-button" onclick="startBreathing()">Start Breathing</button>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+
+    <div class="breathing" id="breathingText">Ready...</div>
+    <div class="prompt" id="promptText"></div>
+
+    <!-- Audio elements -->
+    <audio id="audioOcean" loop src="ocean.mp3"></audio>
+    <audio id="audioRain" loop src="rain.mp3"></audio>
+    <audio id="audioPiano" loop src="piano.mp3"></audio>
+    <audio id="audioForest" loop src="forest.mp3"></audio>
+  </div>
+
+  <script>
+    const musicSelector = document.getElementById("musicSelector");
+    const volumeSlider = document.getElementById("volumeSlider");
+    const promptText = document.getElementById("promptText");
+    const breathingText = document.getElementById("breathingText");
+
+    let currentAudio = null;
+    let breathingInterval;
+    let prompts = ["Inhale...", "Hold...", "Exhale...", "Hold..."];
+    let backgroundImages = {
+      ocean: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e')",
+      rain: "url('https://images.unsplash.com/photo-1523413651479-597eb2da0ad6')",
+      piano: "url('https://images.unsplash.com/photo-1511376777868-611b54f68947')",
+      forest: "url('https://images.unsplash.com/photo-1501785888041-af3ef285b470')"
+    };
+
+    function updateAudio() {
+      if (currentAudio) currentAudio.pause();
+
+      const selected = musicSelector.value;
+      currentAudio = document.getElementById("audio" + selected.charAt(0).toUpperCase() + selected.slice(1));
+      currentAudio.volume = volumeSlider.value;
+      currentAudio.play();
+
+      document.body.style.backgroundImage = backgroundImages[selected];
+    }
+
+    function startBreathing() {
+      let index = 0;
+      updatePrompt(index);
+      clearInterval(breathingInterval);
+
+      breathingInterval = setInterval(() => {
+        index = (index + 1) % prompts.length;
+        updatePrompt(index);
+      }, 4000); // 4 seconds per phase
+    }
+
+    function updatePrompt(i) {
+      breathingText.textContent = prompts[i];
+      speak(prompts[i]);
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    function speak(text) {
+      const synth = window.speechSynthesis;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.9;
+      synth.speak(utter);
+    }
+
+    musicSelector.addEventListener("change", updateAudio);
+    volumeSlider.addEventListener("input", () => {
+      if (currentAudio) currentAudio.volume = volumeSlider.value;
+    });
+
+    // Start music initially
+    updateAudio();
+  </script>
+  <footer>design by = mintu "Calm your chaos, one breath at a time."</footer>
+</body>
+</html>
+
